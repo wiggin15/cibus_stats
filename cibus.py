@@ -19,29 +19,31 @@ def get_mails_from(username, passw, fromwho):
 def get_cibus_subjects(mails):
     for mail in mails:
         subject = email.Header.decode_header(mail['subject'])[0][0]
+        if subject.startswith(prefix):
+            yield subject[len(prefix):]
 
-        if not subject.startswith(prefix):
-            continue
-        
-        yield subject[len(prefix):]
-
-def get_prices_from_subjects(subjects):
-    prices = dict()
+def parse_subjects(subjects):
+    """ extracts the restaurant name and its price from the mail subject """
     for subject in subjects:
         place, nis = subject.split(' NIS ')
         place = ' - '.join([part.strip() for part in place.split('-')])
+        yield place, nis
+        
+def group_by_places(items):
+    prices = dict()
+    for place, nis in items:
         prices.setdefault(place, list()).append(float(nis))
     for place, pricelist in prices.items():
         average = sum(pricelist) / len(pricelist)
         yield place, average, len(pricelist)
 
-
 def main():
     import sys
     _, username, passw = sys.argv
     mails = get_mails_from(username, passw, "Cibus")
-    subjects = list(get_cibus_subjects(mails))
-    items = sorted(get_prices_from_subjects(subjects), key=lambda x: x[1])
+    subjects = get_cibus_subjects(mails)
+    items = parse_subects(subjects)
+    items = sorted(group_by_places(items), key=lambda x: x[1])
     open("cibus.txt", "wb").writelines(['{} {:.2f} {}\n'.format(*item) for item in items])
     
 if __name__ == '__main__':
