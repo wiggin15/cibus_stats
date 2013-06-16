@@ -42,7 +42,7 @@ def main():
     _, username, passw = sys.argv
     mails = get_mails_from(username, passw, "Cibus")
     subjects = get_cibus_subjects(mails)
-    items = parse_subects(subjects)
+    items = parse_subjects(subjects)
     items = sorted(group_by_places(items), key=lambda x: x[1])
     open("cibus.txt", "wb").writelines(['{} {:.2f} {}\n'.format(*item) for item in items])
     
